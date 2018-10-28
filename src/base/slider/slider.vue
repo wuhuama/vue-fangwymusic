@@ -4,7 +4,8 @@
       <slot></slot>
     </div>
     <div class="dots">
-      <span class="dot" v-for="(item, index) in dots" :key="index" :class="{'active' : currentPageIndex === index}"></span>
+      <span class="dot" v-for="(item, index) in dots"
+      :key="index" :class="{'active' : currentPageIndex === index}"></span>
     </div>
   </div>
 </template>
@@ -35,7 +36,7 @@ export default {
       default: 4000
     }
   },
-  mounted() {
+   mounted () {
     setTimeout(() => {
       this._setSliderWidth()
       this._initDots()
@@ -44,11 +45,10 @@ export default {
     }, 20)
 
     window.addEventListener('resize', () => {
-      if (!this.slide || !this.slide.enabled) {
+      if (!this.slider) {
         return
       }
-      clearTimeout(this.resizeTimer)
-      this._setSliderWidth()
+      this._setSliderWidth(true)
     })
   },
   methods: {
@@ -66,7 +66,22 @@ export default {
       if (this.loop) {
         width += 2 * sliderWidth
       }
-      this.$refs.slideGroup.style.width = width + 'px'
+      this.$refs.sliderGroup.style.width = width + 'px'
+    },
+    _initSlider () {
+      this.slider = new BScroll(this.$refs.slider, {
+        scrollX: true,
+        momentum: false,
+        snap: {
+          loop: this.loop,
+          thredhold: 0.3,
+          speed: 400
+        },
+        snapSpeed: 400,
+        bounce: false,
+        stopPropagation: true,
+        click: true
+      })
     },
     _onScrollEnd() {
       let pageIndex = this.slider.getCurrentPage().pageX
@@ -92,45 +107,44 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import "~common/scss/variable";
-.slide {
+.slider {
   min-height: 1px;
-  .slide-group {
+  position: relative;
+  .slider-group {
     position: relative;
     overflow: hidden;
     white-space: nowrap;
-
-    .slide-item {
+    .slider-item {
       float: left;
       box-sizing: border-box;
       overflow: hidden;
       text-align: center;
       img {
-        display: block;
-        width: 100%;
+        display: block;;
+        width: 100%
       }
     }
   }
-}
-.dots {
-  position: absolute;
-  right: 0;
-  left: 0;
-  bottom: 12px;
-  transform: translateZ(1px);
-  text-align: center;
-  font-size: 0;
-  .dot {
-    display: inline-block;
-    margin: 0 4px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: $color-text-l;
+  .dots {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 12px;
+    text-align: center;
+    // font-size: 0;
+    .dot {
+      display: inline-block;
+      margin: 0 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: $color-text-l;
       &.active {
         // width: 10px;
         border-radius: 5px;
         background: $color-highlight-background;
       }
+    }
   }
 }
 </style>

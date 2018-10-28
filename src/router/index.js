@@ -8,6 +8,9 @@ export default new Router({
     {
       path: '/',
       component: Recommend
+    },{
+      path: '/recommend',
+      component: Recommend
     }
   ]
 })
