@@ -1,26 +1,26 @@
 <template>
-  <div class="recommend" ref="recommend">
+  <div class="recommend" ref="recommend" >
     <scroll class="recommend-content" ref="scroll" :data="playList">
       <div>
         <div v-show="banner.length" class="decorate" v-if="banner.length"></div>
         <div v-if="banner.length" class="slider-wrapper">
           <slider>
             <div v-for="item in banner" :key="item.id" @click.stop="selectBanner(item)">
-              <img :src="item.imageUrl" alt="">
+              <img :src="item.imageUrl">
             </div>
           </slider>
         </div>
         <div class="recommend-list" ref="recommendList">
-          <h1 class="title">推荐歌单 ></h1>
+          <h1 class="title">推荐歌单</h1>
           <ul>
             <li class="item" v-for="item in playList" :key="item.id">
               <div class="icon" @click="selectList(item)">
                 <div class="gradients"></div>
-                <!-- <img v-lazy="item.picUrl"> -->
+                <img v-lazy="item.picUrl">
               </div>
               <p class="play-count">
                 <i class="fa fa-headphones"></i>
-                {{Math.floor(item.playCount / 10000)}}万
+                {{Math.floor(item.playCount / 10000) }}万
               </p>
               <div class="text">
                 <p class="name">{{item.name}}</p>
@@ -31,12 +31,12 @@
         <div class="recommend-song" ref="recommendSong">
           <h1 class="title">推荐歌曲</h1>
           <ul>
-            <li class="item" v-for="item in recommendMusic" :key="item.id">
+            <li class="item" v-for="item in recommendMusic" :key="item.id" @click="selectSong(item)">
               <div class="icon">
                 <img v-lazy="item.image">
               </div>
               <p class="text">{{item.name}}</p>
-              <p class="singler">{{item.singer}}</p>
+              <p class="singer">{{item.singer}}</p>
             </li>
           </ul>
         </div>
@@ -45,13 +45,19 @@
     <router-view></router-view>
   </div>
 </template>
+
 <script>
 import Scroll from 'base/scroll/scroll'
 import Slider from 'base/slider/slider'
 import {getBanner, getRecommendList, getRecommendMusic} from 'api/recommend'
+import {getSongDetail} from 'api/search'
+import {createRecommendSong} from 'common/js/song'
 import {ERR_OK} from 'common/js/config'
+import {mapMutations, mapActions} from 'vuex'
+import {playlistMixin} from 'common/js/mixin'
 
 export default {
+  mixins: [playlistMixin],
   data () {
     return {
       banner: [],
@@ -59,24 +65,64 @@ export default {
       recommendMusic: []
     }
   },
-  components: {
-    Scroll,
-    Slider
-  },
-  mounted () {
+  created () {
     this._getBanner()
     this._getRecommendList()
-    this._getRecommendSong()
+    this._getRecommendMusic()
+    // this.$refs.recommendList.style.
   },
   methods: {
+    // firstPlay () {
+    //   console.log('firstPlay')
+    //   this.$refs.audio.play()
+    // },
+    selectBanner (item) {
+      let regHttp = /^http/
+      let regSong = /\/song\?id/
+      if (regHttp.test(item.url)) {
+        window.open(item.url)
+      }
+      if (regSong.test(item.url)) {
+        getSongDetail(item.targetId).then((res) => {
+          let m = res.data.songs[0]
+          let song = {
+            id: m.id,
+            singer: m.ar[0].name,
+            name: m.name,
+            image: m.al.picUrl,
+            album: m.al.name
+          }
+          this.insertSong(song)
+          this.setFullScreen(true)
+        })
+      }
+    },
+    selectSong (item) {
+      this.insertSong(item)
+    },
+    handlePlaylist (playlist) {
+      const bottom = playlist.length > 0 ? '60px' : ''
+      this.$refs.recommend.style.bottom = bottom
+      this.$refs.scroll.refresh()
+    },
+    selectList (item) {
+      this.$router.push({
+        path: `/recommend/${item.id}`
+      })
+      // console.log(item)
+      this.setMuiscList(item)
+    },
     _getBanner () {
       getBanner().then((res) => {
         if (res.status === ERR_OK) {
+          // let list = res.data.banners.map((item) => {
+          //   if (item.)
+          // })
           let list = res.data.banners
-          console.log(res)
-          this.banner = list
+          this.banner = list.splice(4)
+          console.log(this.banner)
         } else {
-          console.log('Banner 获取失败')
+          console.error('Banner 获取失败')
         }
       })
     },
@@ -85,24 +131,42 @@ export default {
         if (res.status === ERR_OK) {
           this.playList = res.data.result
         } else {
-          console.error('获取歌单出错')
+          console.error('getRecommendList 获取失败')
         }
       })
     },
-    _getRecommendSong () {
+    _getRecommendMusic () {
       getRecommendMusic().then((res) => {
         if (res.status === ERR_OK) {
-          this.getRecommendMusic = res.data.result
+          let list = res.data.result.map((item) => {
+            return createRecommendSong(item)
+          })
+          list.splice(9)
+          this.recommendMusic = list
+        } else {
+          console.error('getRecommendMusic 获取失败')
         }
       })
-    }
+    },
+    ...mapMutations({
+      setMuiscList: 'SET_MUSIC_LIST',
+      setFullScreen: 'SET_FULL_SCREEN'
+    }),
+    ...mapActions([
+      'insertSong'
+    ])
+  },
+  components: {
+    Slider,
+    Scroll
   }
 }
 </script>
+
 <style lang="scss" scoped>
 @import "~common/scss/variable";
 @import "~common/scss/mixin";
-.recommend {
+ .recommend {
   position: fixed;
   width: 100%;
   top: 88px;

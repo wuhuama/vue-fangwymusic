@@ -2,18 +2,24 @@
   <div id="app">
     <m-header></m-header>
     <tab></tab>
-    <router-view></router-view>
+    <keep-alive>
+      <router-view></router-view>
+    </keep-alive>
+    <!-- <player></player> -->
   </div>
 </template>
 
 <script>
 import MHeader from 'cpnts/header/header'
 import Tab from 'cpnts/tab/tab'
+import Player from 'cpnts/player/player'
+
 export default {
   name: 'App',
   components: {
     MHeader,
-    Tab
+    Tab,
+    Player
   }
 }
 </script>
